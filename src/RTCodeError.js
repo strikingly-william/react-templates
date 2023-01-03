@@ -1,97 +1,118 @@
-'use strict';
+'use strict'
+const util = require('util')
+const _ = require('lodash')
+
+
+/**
+ * @typedef {{line: number, col: number}} Pos
+ */
 
 /**
  * @param {string} html
  * @param node
- * @return {{line: number, col: number}}}
+ * @return {Pos}
  */
 function getLine(html, node) {
     if (!node) {
-        return {col: 1, line: 1};
+        return {line: 1, col: 1}
     }
-    var linesUntil = html.substring(0, node.startIndex).split('\n');
-    return {line: linesUntil.length, col: linesUntil[linesUntil.length - 1].length + 1};
+    const linesUntil = html.substring(0, node.startIndex).split('\n')
+    return {line: linesUntil.length, col: linesUntil[linesUntil.length - 1].length + 1}
 }
 
-//function getLine(node) {
-//    if (!node) {
-//        return 0;
-//    }
-//    var line = 0;
-//    var prev = node.prev;
-//    while (prev) {
-//        var nl = prev.data.split('\n').length - 1;
-//        line += nl;
-//        prev = prev.prev;
-//    }
-//
-//    line += getLine(node.parent);
-//    return line + 1;
-//}
-
-//function RTCodeError(message, line) {
-//    this.name = 'RTCodeError';
-//    this.message = message || '';
-//    this.line = line || -1;
-//}
-//RTCodeError.prototype = Error.prototype;
-
-// Redefine properties on Error to be enumerable
-/*eslint no-extend-native:0*/
-Object.defineProperty(Error.prototype, 'message', {configurable: true, enumerable: true});
-Object.defineProperty(Error.prototype, 'stack', {configurable: true, enumerable: true});
-//Object.defineProperty(Error.prototype, 'line', { configurable: true, enumerable: true });
-
 /**
- * @param {string} message
- * @param {number=} startOffset
- * @param {number=} endOffset
- * @param {number=} line
- * @param {number=} column
- * @constructor
+ * @param {number} n
+ * @return {number}
  */
-function RTCodeError(message, startOffset, endOffset, line, column) {
-    Error.captureStackTrace(this, RTCodeError);
-    this.name = 'RTCodeError';
-    this.message = message || '';
-    this.index = norm(startOffset);
-    this.startOffset = norm(startOffset);
-    this.endOffset = norm(endOffset);
-    this.line = norm(line);
-    this.column = norm(column);
-}
-
 function norm(n) {
-    return n === undefined ? -1 : n;
+    return n === undefined ? -1 : n
 }
-
-RTCodeError.prototype = Object.create(Error.prototype);
-
-RTCodeError.build = buildError;
-RTCodeError.norm = norm;
-
-RTCodeError.prototype.toIssue = function () {
-};
 
 /**
- * @param {string} msg
+ *
+ */
+class RTCodeError extends Error {
+    /**
+     * @param {string} message
+     * @param {number=} startOffset
+     * @param {number=} endOffset
+     * @param {number=} line
+     * @param {number=} column
+     */
+    constructor(message, startOffset, endOffset, line, column) {
+        super()
+        Error.captureStackTrace(this, RTCodeError)
+        this.name = 'RTCodeError'
+        this.message = message || ''
+        this.index = norm(startOffset)
+        this.startOffset = norm(startOffset)
+        this.endOffset = norm(endOffset)
+        this.line = norm(line)
+        this.column = norm(column)
+    }
+}
+
+/**
+ * @type {buildError}
+ */
+RTCodeError.build = buildError
+RTCodeError.norm = norm
+
+/**
  * @param {*} context
  * @param {*} node
+ * @param {string} msg
+ * @param args
  * @return {RTCodeError}
  */
-function buildError(msg, context, node) {
-    var pos = getLine(context.html, node);
-    var end;
+function buildFormat(context, node, msg, args) {
+    return buildError(context, node, util.format.apply(this, [msg].concat(args)))
+}
+
+/**
+ * @param {*} context
+ * @param {*} node
+ * @param {string} msg
+ * @param {Array.<string>} args
+ * @return {RTCodeError}
+ */
+RTCodeError.buildFormat = _.rest(buildFormat, 3)
+
+/**
+ * @param {*} context
+ * @param {*} node
+ * @param {string} msg
+ * @return {RTCodeError}
+ */
+function buildError(context, node, msg) {
+    const loc = getNodeLoc(context, node)
+    return new RTCodeError(msg, loc.start, loc.end, loc.pos.line, loc.pos.col)
+}
+
+/**
+ * @param context
+ * @param node
+ * @return {{pos:Pos, start:number, end:number}}
+ */
+function getNodeLoc(context, node) {
+    const start = node.startIndex
+    const pos = getLine(context.html, node)
+    let end
     if (node.data) {
-        end = node.startIndex + node.data.length;
-    } else if (node.next) {
-        end = node.next.startIndex;
+        end = start + node.data.length
+    } else if (node.next) { // eslint-disable-line
+        end = node.next.startIndex
     } else {
-        end = context.html.length;
+        end = context.html.length
     }
-    return new RTCodeError(msg, node.startIndex, end, pos.line, pos.col);
+    return {
+        pos,
+        start,
+        end
+    }
 }
 
 module.exports = {
-    RTCodeError: RTCodeError
-};
+    RTCodeError,
+    getNodeLoc
+}

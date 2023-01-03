@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 module.exports = function (grunt) {
     grunt.initConfig({
         clean: {
@@ -13,16 +13,8 @@ module.exports = function (grunt) {
                     'test/src/**/*.js',
                     '!playground/libs/**/*.js',
                     '!playground/dist/**/*.js',
-                    '!playground/rt-main.browser.js',
                     '!playground/**/*.rt.js'
                 ]
-            },
-            teamcity: {
-                options: {
-                    format: 'checkstyle',
-                    'output-file': 'target/eslint.xml'
-                },
-                src: ['<%= eslint.all.src %>']
             }
         },
         jasmine_node: {
@@ -47,16 +39,12 @@ module.exports = function (grunt) {
                 }
             }
         },
-        node_tap: {
-            default_options: {
-                options: {
-                    outputType: 'tap',
-                    outputTo: 'console'
-                },
-                files: {
-                    tests: ['./test/src/*.js']
-                }
-            }
+        tape: {
+            options: {
+                pretty: true,
+                output: 'console'
+            },
+            files: ['test/src/*.js']
         },
         watch: {
             rt: {
@@ -100,37 +88,33 @@ module.exports = function (grunt) {
                 options: readConfig('./playground.config.js')
             }
         }
-    });
+    })
 
     function readConfig(file) {
-        /*eslint no-eval:0*/
-        return eval(require('fs').readFileSync(file).toString());
+        return eval(require('fs').readFileSync(file).toString()) // eslint-disable-line no-eval
     }
 
-    grunt.task.loadTasks('./internalTasks');
-    grunt.loadNpmTasks('grunt-browserify');
-    grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks('grunt-contrib-requirejs');
-    grunt.loadNpmTasks('grunt-eslint');
-    grunt.loadNpmTasks('grunt-node-tap');
-    grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-tape')
+    grunt.loadNpmTasks('grunt-browserify')
+    grunt.loadNpmTasks('grunt-contrib-watch')
+    grunt.loadNpmTasks('grunt-contrib-requirejs')
+    grunt.loadNpmTasks('grunt-eslint')
+    grunt.loadNpmTasks('grunt-contrib-uglify')
 
-    grunt.registerTask('default', ['eslint:all']);
-    grunt.registerTask('test', ['node_tap']);
+    grunt.registerTask('default', ['eslint:all'])
+    grunt.registerTask('lint', ['eslint:all'])
+    grunt.registerTask('test', ['tape'])
 
-    grunt.registerTask('teamcity', ['eslint:teamcity']);
+    grunt.registerTask('rt', () => {
+        const reactTemplates = require('./src/cli')
+        const files = grunt.file.expand('playground/*.rt')
+        const ret = reactTemplates.execute({modules: 'amd', force: true, _: files})
+        return ret === 0
+    })
 
-    grunt.registerTask('rt', function () {
-        var reactTemplates = require('./src/cli');
-        var files = grunt.file.expand('playground/*.rt');
-        var conf = {modules: 'amd', force: true, _: files};
-        var ret = reactTemplates.execute(conf);
-        return ret === 0;
-    });
+    grunt.registerTask('build', ['rt', 'browserify:pg'])
+    grunt.registerTask('home', ['rt', 'browserify:home'])
+    grunt.registerTask('pgall', ['rt', 'browserify', 'uglify', 'requirejs'])
 
-    grunt.registerTask('build', ['rt', 'browserify:pg']);
-    grunt.registerTask('home', ['rt', 'browserify:home']);
-    grunt.registerTask('pgall', ['rt', 'browserify', 'uglify', 'requirejs']);
-
-    grunt.registerTask('all', ['default', 'test']);
-};
+    grunt.registerTask('all', ['default', 'test'])
+}

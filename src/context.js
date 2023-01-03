@@ -1,6 +1,6 @@
-'use strict';
+'use strict'
 /**
- * @typedef {{color: boolean, cwd: string, report: function(string), warn: function(string), getMessages: function():Array.<MESSAGE>}} CONTEXT
+ * @typedef {{color: boolean, cwd: string, report: function(string), issue: function(string, string,string,number,number,number=,number=), warn: function(string), verbose: function(string), getMessages: function():Array.<MESSAGE>, options:Options, messages: Array.<MESSAGE>}} CONTEXT
  */
 /**
  * @typedef {{msg: string, level: MESSAGE_LEVEL, file: string,line:number,column:number,startOffset:number,endOffset:number}} MESSAGE
@@ -10,38 +10,43 @@
  * Enum for tri-state values.
  * @enum {string}
  */
-var MESSAGE_LEVEL = {
+const MESSAGE_LEVEL = {
     ERROR: 'ERROR',
     WARN: 'WARN',
     INFO: 'INFO'
-};
+}
 
-var _ = require('lodash');
-var err = require('./RTCodeError');
-var norm = err.RTCodeError.norm;
+const _ = require('lodash')
+const err = require('./RTCodeError')
+const norm = err.RTCodeError.norm
 
 
 /**
  * @type {CONTEXT}
  */
-var context = {
+const context = {
     /** @type {Array.<MESSAGE>} */
     messages: [],
     /** @type {boolean} */
     color: true,
     /** @type {string} */
     cwd: process.cwd(),
-    report: function (msg) {
-        console.log(msg);
+    report(msg) {
+        console.log(msg)
     },
-    info: function (msg, file, line, column) {
-        context.issue(MESSAGE_LEVEL.INFO, msg, file, line, column);
+    verbose(msg) {
+        if (context.options.verbose) {
+            console.log(msg)
+        }
     },
-    warn: function (msg, file, line, column) {
-        context.issue(MESSAGE_LEVEL.WARN, msg, file, line, column);
+    info(msg, file, line, column) {
+        context.issue(MESSAGE_LEVEL.INFO, msg, file, line, column)
     },
-    error: function (msg, file, line, column, startOffset, endOffset) {
-        context.issue(MESSAGE_LEVEL.ERROR, msg, file, line, column, startOffset, endOffset);
+    warn(msg, file, line, column, startOffset, endOffset) {
+        context.issue(MESSAGE_LEVEL.WARN, msg, file, line, column, startOffset, endOffset)
+    },
+    error(msg, file, line, column, startOffset, endOffset) {
+        context.issue(MESSAGE_LEVEL.ERROR, msg, file, line, column, startOffset, endOffset)
     },
     /**
      * @param {MESSAGE_LEVEL} level
@@ -52,24 +57,24 @@ var context = {
      * @param {number=} startOffset
      * @param {number=} endOffset
      */
-    issue: function (level, msg, file, line, column, startOffset, endOffset) {
-        context.messages.push({level: level, msg: msg, file: file || null, line: norm(line), column: norm(column), index: norm(startOffset), startOffset: norm(startOffset), endOffset: norm(endOffset)});
+    issue(level, msg, file, line, column, startOffset, endOffset) {
+        context.messages.push({level, msg, file: file || null, line: norm(line), column: norm(column), index: norm(startOffset), startOffset: norm(startOffset), endOffset: norm(endOffset)})
     },
-    getMessages: function () {
-        return context.messages;
+    getMessages() {
+        return context.messages
     },
-    clear: function () {
-        context.messages = [];
+    clear() {
+        context.messages = []
     },
-    hasErrors: function () {
-        return _.some(context.messages, {level: MESSAGE_LEVEL.ERROR});
+    hasErrors() {
+        return _.some(context.messages, {level: MESSAGE_LEVEL.ERROR})
     },
     options: {
         verbose: false,
         outFile: null,
         format: 'stylish'
     },
-    MESSAGE_LEVEL: MESSAGE_LEVEL
-};
+    MESSAGE_LEVEL
+}
 
-module.exports = context;
+module.exports = context

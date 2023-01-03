@@ -1,6 +1,6 @@
 /*eslint-env browser*/
-define(['react', 'jquery', 'lodash', './playground-fiddle.rt', './playground.rt'], function (React, $, _, pgFiddleTemplate, playgroundTemplate) {
-    'use strict';
+define(['react', 'react-dom', 'jquery', 'lodash', './playground-fiddle.rt', './playground.rt'], function (React, ReactDOM, $, _, pgFiddleTemplate, playgroundTemplate) {
+    'use strict'
     //function emptyFunc() {
     //    return null;
     //}
@@ -25,13 +25,13 @@ define(['react', 'jquery', 'lodash', './playground-fiddle.rt', './playground.rt'
 
     function showMessage(editor, msg) {
         if (editor && editor.showMessage) {
-            editor.annotate({line: 1, message: msg});
+            editor.annotate({line: 1, message: msg})
         }
     }
 
     function clearMessage(editor) {
-        if (editor && editor.clearMessage) {
-            editor.clearAnnotations();
+        if (editor && editor.clearAnnotations) {
+            editor.clearAnnotations()
         }
     }
 
@@ -55,25 +55,23 @@ define(['react', 'jquery', 'lodash', './playground-fiddle.rt', './playground.rt'
 
     function generateRenderFunc(renderFunc) {
         return function () {
-            var res = null;
+            var res = null
             try {
-                res = renderFunc.apply(this);
+                res = renderFunc.apply(this)
             } catch (e) {
-                res = React.DOM.div.apply(this, [{style: {color: 'red'}}, 'Exception:' + e.message]);
+                res = React.DOM.div.apply(this, [{style: {color: 'red'}}, 'Exception:' + e.message])
             }
             return React.DOM.div.apply(this, _.flatten([
                 {key: 'result'},
                 res
-            ]));
-        };
+            ]))
+        }
     }
 
-    var templateHTML = '<div></div>';
+    var templateHTML = '<div></div>'
     var templateProps = 'var template = React.createClass({\n' +
-        '   render: function () {\n' +
-        '       return templateRT.apply(this);\n' +
-        '   }\n' +
-        '});';
+        '   render: templateRT\n' +
+        '});'
 
     //var selfCleaningTimeout = {
     //    componentDidUpdate: function() {
@@ -92,25 +90,28 @@ define(['react', 'jquery', 'lodash', './playground-fiddle.rt', './playground.rt'
         propTypes: {
             direction: React.PropTypes.oneOf(['horizontal', 'vertical']),
             codeVisible: React.PropTypes.bool,
-            fiddle: React.PropTypes.bool
+            fiddle: React.PropTypes.bool,
+            templateHTML: React.PropTypes.string,
+            templateProps: React.PropTypes.string,
+            name: React.PropTypes.string
         },
         templateSource: '',
         validHTML: true,
         validProps: true,
         setTimeout: function () {
             //console.log('setTimeout');
-            clearTimeout(this.timeoutID);
-            this.timeoutID = setTimeout.apply(null, arguments);
+            clearTimeout(this.timeoutID)
+            this.timeoutID = setTimeout.apply(null, arguments)
         },
         getDefaultProps: function () {
             return {
                 direction: 'horizontal', //vertical
                 codeVisible: true,
                 fiddle: false
-            };
+            }
         },
         getLayoutClass: function () {
-            return (this.props.direction === 'horizontal' && 'horizontal') || 'vertical';
+            return (this.props.direction === 'horizontal' && 'horizontal') || 'vertical' //eslint-disable-line no-extra-parens
         },
         //executeCode: function() {
         //    var mountNode = this.refs.mount.getDOMNode();
@@ -140,85 +141,78 @@ define(['react', 'jquery', 'lodash', './playground-fiddle.rt', './playground.rt'
         //},
         getTabs: function () {
             if (this.props.codeVisible) {
-                return [['templateHTML', 'Template'], ['templateProps', 'Class'], ['templateSource', 'Generated code']];
+                return [['templateHTML', 'Template'], ['templateProps', 'Class'], ['templateSource', 'Generated code']]
             }
-            return [['templateHTML', 'Template'], ['templateSource', 'Generated code']];
+            return [['templateHTML', 'Template'], ['templateSource', 'Generated code']]
         },
         updateSample: function (state) {
             //try {
             //    React.unmountComponentAtNode(mountNode);
             //} catch (e) { }
 
-            this.generateCode(state);
+            this.generateCode(state)
             //this.sampleFunc = generateTemplateFunction(this.templateSource);
             //this.validHTML = this.sampleFunc !== emptyFunc;
-            this.validHTML = true;
-            this.sampleRender = generateRenderFunc(this.sampleFunc);
-            var editor;
+            this.validHTML = true
+            this.sampleRender = generateRenderFunc(this.sampleFunc)
+            var editor
             try {
-                this.validProps = true;
+                this.validProps = true
                 //console.log(state.templateProps);
-                /*eslint no-eval:0*/
-                this.sample = eval('(function () {' + this.templateSource + '\n' + state.templateProps + '\n return React.createElement(' + state.name + ');})()');
-                clearMessage(this.refs.editorCode);
+                this.sample = eval('(function () {' + this.templateSource + '\n' + state.templateProps + '\n return React.createElement(' + state.name + ');})()') //eslint-disable-line no-eval
+                clearMessage(this.refs.editorCode)
             } catch (e) {
-                this.validProps = false;
-                this.sample = null;
-                editor = this.refs.editorCode;
-                this.showError(e, editor);
+                this.validProps = false
+                this.sample = null
+                editor = this.refs.editorCode
+                this.showError(e, editor)
             }
             //classBase.render = this.sampleRender;
             //this.sample = React.createFactory(React.createClass(classBase));
         },
         showError: function (e, editor) {
-            var mountNode = this.refs.mount.getDOMNode();
+            var mountNode = this.refs.mount
             this.setTimeout(function () {
-                showMessage(editor, e.message);
-                React.render(
+                showMessage(editor, e.message)
+                ReactDOM.render(
                     React.createElement('div', {className: 'playground-error'}, e.toString()),
                     mountNode
-                );
-            }, 500);
+                )
+            }, 500)
         },
         showErrorAnnotation: function (annot, editor) {
-            var mountNode = this.refs.mount.getDOMNode();
+            var mountNode = this.refs.mount
             this.setTimeout(function () {
-                editor.annotate(annot);
-                React.render(
+                editor.annotate(annot)
+                ReactDOM.render(
                     React.createElement('div', {className: 'playground-error'}, annot.message),
                     mountNode
-                );
-            }, 500);
+                )
+            }, 500)
         },
         clear: function () {
             var currentState = {
                 templateHTML: templateHTML,
                 templateProps: templateProps
-            };
+            }
             //this.updateSample(currentState);
-            this.setState(currentState);
+            this.setState(currentState)
         },
         generateCode: function (state) {
-            var html = state.templateHTML;
-            var editor = this.refs.editorRT;
-            var name = window.reactTemplates.normalizeName(state.name) + 'RT';
-            var code = null;
-            var annot = null;
+            var html = state.templateHTML
+            var editor = this.refs.editorRT
+            var name = window.reactTemplates.normalizeName(state.name) + 'RT'
+            var code = null
             try {
-                code = window.reactTemplates.convertTemplateToReact(html.trim().replace(/\r/g, ''), {modules: 'none', name: name});
-                clearMessage(editor);
+                code = window.reactTemplates.convertTemplateToReact(html.trim().replace(/\r/g, ''), {modules: 'none', name: name})
+                clearMessage(editor)
             } catch (e) {
-                if (e.name === 'RTCodeError') {
-                    //index: -1 line: -1 message: "Document should have a root element" name: "RTCodeError"
-                    annot = {line: e.line, message: e.message, index: e.index};
-                } else {
-                    annot = {line: 1, message: e.message};
-                }
-                this.showErrorAnnotation(annot, editor);
+                var annot = e.name === 'RTCodeError' ? {line: e.line, message: e.message, index: e.index} : {line: 1, message: e.message}
+                this.showErrorAnnotation(annot, editor)
                 //showMessage(editor, msg);
-                console.log(e);
+                console.log(e)
             }
-            this.templateSource = code;
+            this.templateSource = code
         },
         getInitialState: function () {
             var currentState = {
@@ -226,53 +220,53 @@ define(['react', 'jquery', 'lodash', './playground-fiddle.rt', './playground.rt'
                 templateProps: this.props.templateProps || templateProps,
                 name: this.props.name || 'template',
                 currentTab: 'templateHTML'
-            };
+            }
             //this.updateSample(currentState);
-            return currentState;
+            return currentState
         },
         componentDidMount: function () {
             if (this.props.fiddle) {
-                window.addEventListener('resize', this.calcSize);
-                this.calcSize();
+                window.addEventListener('resize', this.calcSize)
+                this.calcSize()
             }
-            this.updateSample(this.state);
-            this.renderSample();
+            this.updateSample(this.state)
+            this.renderSample()
         },
         renderSample: function () {
-            var mountNode = this.refs.mount.getDOMNode();
+            var mountNode = this.refs.mount
             if (this.sample) {
-                React.render(this.sample, mountNode);
+                ReactDOM.render(this.sample, mountNode)
             }
         },
         componentDidUpdate: function () {
-            this.renderSample();
+            this.renderSample()
         },
-        componentWillUnmount: function (){
-            window.removeEventListener('resize', this.calcSize);
+        componentWillUnmount: function () {
+            window.removeEventListener('resize', this.calcSize)
         },
         calcSize: function () {
-            var contentHeight = $(window).height() - $('#header').height();
-            var height = contentHeight / 2 - 10;
+            var contentHeight = $(window).height() - $('#header').height()
+            var height = contentHeight / 2 - 10
 
             $('.code-area').each(function (/*i, k*/) {
-                $(this).height(height);
+                $(this).height(height)
                 //console.log($(this).height());
-            });
-            this.refs.editorCode.editor.refresh();
-            this.refs.editorRT.editor.refresh();
-            this.refs.editorGenerated.editor.refresh();
+            })
+            this.refs.editorCode.editor.refresh()
+            this.refs.editorRT.editor.refresh()
+            this.refs.editorGenerated.editor.refresh()
         },
         componentWillUpdate: function (nextProps, nextState) {
             if (nextState.templateHTML !== this.state.templateHTML || nextState.templateProps !== this.state.templateProps) {
-                this.updateSample(nextState);
+                this.updateSample(nextState)
             }
         },
         render: function () {
-            this.generateCode(this.state);
-            var template = this.props.fiddle ? pgFiddleTemplate : playgroundTemplate;
-            return template.apply(this);
+            this.generateCode(this.state)
+            var template = this.props.fiddle ? pgFiddleTemplate : playgroundTemplate
+            return template.apply(this)
         }
-    });
+    })
 
-    return Playground;
-});
+    return Playground
+})
